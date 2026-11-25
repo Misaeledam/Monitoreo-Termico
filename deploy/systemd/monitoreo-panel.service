@@ -1,0 +1,22 @@
+[Unit]
+Description=Monitoreo termico - panel web (HTTPS)
+After=network.target monitoreo-monitor.service
+
+[Service]
+Type=simple
+User=monitoreo
+Group=monitoreo
+EnvironmentFile=-/etc/monitoreo/secretos.env
+Environment=MONITOREO_CONFIG=/etc/monitoreo/config.toml
+ExecStart=/opt/monitoreo/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8443 \
+    --certfile /etc/monitoreo/tls/panel.crt --keyfile /etc/monitoreo/tls/panel.key \
+    monitoreo.panel.wsgi:app
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

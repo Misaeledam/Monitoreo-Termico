@@ -1,0 +1,26 @@
+[Unit]
+Description=Monitoreo termico del bastidor (ciclo de supervision)
+After=network.target time-sync.target
+Wants=time-sync.target
+
+[Service]
+Type=simple
+User=monitoreo
+Group=monitoreo
+SupplementaryGroups=i2c gpio
+EnvironmentFile=-/etc/monitoreo/secretos.env
+ExecStart=/opt/monitoreo/venv/bin/python -m monitoreo monitor -c /etc/monitoreo/config.toml
+Restart=always
+RestartSec=5
+# Archivos de la base legibles por el grupo (el agente SNMP y el panel solo leen).
+UMask=0027
+StateDirectory=monitoreo
+StateDirectoryMode=0750
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/monitoreo
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
