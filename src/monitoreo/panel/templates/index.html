@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitoreo térmico · {{ bastidor }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Monitoreo térmico</h1>
+    <p class="sub">{{ bastidor }} · <a href="{{ url_for('configuracion') }}">Umbrales</a> ·
+      <a href="{{ url_for('exportar', dias=7) }}">Exportar 7 días (CSV)</a></p>
+  </header>
+
+  <main>
+    <section id="estado" class="tarjeta">
+      <div id="nivel" class="nivel">Cargando…</div>
+      <div id="actualizado" class="sub"></div>
+    </section>
+
+    <section class="grilla">
+      <div class="tarjeta"><h2>Entrada</h2><p class="dato" id="t_in">–</p><p class="sub" id="hr_in"></p></div>
+      <div class="tarjeta"><h2>Salida</h2><p class="dato" id="t_out">–</p><p class="sub" id="hr_out"></p></div>
+      <div class="tarjeta"><h2>ΔT</h2><p class="dato" id="dt">–</p><p class="sub" id="flujo"></p></div>
+      <div class="tarjeta"><h2>Punto de rocío</h2><p class="dato" id="rocio">–</p><p class="sub" id="margen"></p></div>
+      <div class="tarjeta"><h2>Variación 15 min</h2><p class="dato" id="tasa15">–</p><p class="sub" id="tasa1h"></p></div>
+      <div class="tarjeta"><h2>Agua</h2><p class="dato" id="agua">–</p></div>
+    </section>
+
+    <section class="tarjeta">
+      <div class="fila">
+        <h2>Temperaturas</h2>
+        <select id="horas" aria-label="Período">
+          <option value="1">1 h</option><option value="6">6 h</option>
+          <option value="24" selected>24 h</option><option value="168">7 días</option>
+        </select>
+      </div>
+      <canvas id="grafico" height="260"></canvas>
+      <p class="sub">Líneas punteadas: umbrales de temperatura de entrada.</p>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Eventos recientes</h2>
+      <table><thead><tr><th>Fecha</th><th>Cambio</th><th>Criterio</th><th>Detalle</th></tr></thead>
+        <tbody id="eventos"></tbody></table>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='panel.js') }}"></script>
+</body>
+</html>

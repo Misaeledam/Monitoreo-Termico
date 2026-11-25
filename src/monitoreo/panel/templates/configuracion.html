@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Umbrales · Monitoreo térmico</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Umbrales vigentes</h1>
+    <p class="sub"><a href="{{ url_for('inicio') }}">← Volver al panel</a> · Archivo: {{ origen }}</p>
+  </header>
+  <main>
+    <section class="tarjeta">
+      <p>Para cambiar un umbral se edita el archivo de configuración; el monitor lo recarga
+        solo en el próximo ciclo, sin reinstalar (RF-14).</p>
+      <table>
+        <thead><tr><th>Métrica</th><th>Nivel</th><th>Condición</th><th>Valor</th><th>Histéresis</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr><td>{{ f.metrica }}</td><td>{{ f.nivel }}</td><td>{{ f.sentido }}</td>
+              <td>{{ f.valor }}</td><td>{{ f.histeresis }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    <section class="tarjeta">
+      <h2>Parámetros</h2>
+      <ul>
+        <li>Intervalo de muestreo: {{ cfg.intervalo_muestreo_s }} s</li>
+        <li>Ventana deslizante: {{ cfg.ventana_min }} min</li>
+        <li>Tiempo mínimo entre avisos: {{ cfg.notificaciones.tiempo_minimo_min }} min</li>
+        <li>Retención del histórico: {{ cfg.retencion_dias }} días</li>
+        <li>Destinatarios activos: {{ cfg.notificaciones.destinatarios | selectattr('activo') | list | length }}</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

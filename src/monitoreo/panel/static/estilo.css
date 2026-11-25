@@ -1,0 +1,29 @@
+:root {
+  --fondo: #f4f6f8; --tarjeta: #fff; --texto: #1d2733; --sub: #5b6875; --borde: #dde3e9;
+  --normal: #1f8a4c; --aviso: #b88a00; --advertencia: #d0631b; --critico: #c62828;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fondo: #12171d; --tarjeta: #1b232c; --texto: #e6edf3; --sub: #9aa7b4; --borde: #2c3640; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--fondo); color: var(--texto); }
+header, main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { margin: 0 0 4px; font-size: 1.5rem; }
+h2 { margin: 0 0 8px; font-size: 1rem; color: var(--sub); font-weight: 600; }
+a { color: inherit; }
+.sub { color: var(--sub); font-size: .9rem; margin: 4px 0 0; }
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px;
+  padding: 16px; margin-bottom: 16px; }
+.grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px;
+  margin-bottom: 16px; }
+.grilla .tarjeta { margin: 0; }
+.dato { font-size: 1.8rem; font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }
+.nivel { font-size: 1.6rem; font-weight: 700; }
+.n0 { color: var(--normal); } .n1 { color: var(--aviso); }
+.n2 { color: var(--advertencia); } .n3 { color: var(--critico); }
+.fila { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+canvas { width: 100%; display: block; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+@media (max-width: 600px) { .dato { font-size: 1.4rem; } th:nth-child(3), td:nth-child(3) { display: none; } }
