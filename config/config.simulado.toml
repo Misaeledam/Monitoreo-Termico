@@ -1,0 +1,19 @@
+# Configuración para el entorno virtual simulado (VM o PC de desarrollo).
+# Uso:  python -m monitoreo monitor -c config/config.simulado.toml --simulado calentamiento --acelerar 30
+#       python -m monitoreo panel   -c config/config.simulado.toml
+[general]
+bastidor = "Bastidor simulado"
+intervalo_muestreo_s = 60
+base_datos = "datos/simulado.db"
+temperatura_referencia = "entrada"
+
+[sondas]
+modo = "simulado"
+escenario = "normal"
+
+[notificaciones]
+tiempo_minimo_min = 10
+
+[panel]
+host = "127.0.0.1"
+puerto = 8080

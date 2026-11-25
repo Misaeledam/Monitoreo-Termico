@@ -1,0 +1,133 @@
+# Configuración del sistema de monitoreo térmico.
+# Copiar a /etc/monitoreo/config.toml y ajustar. El monitor recarga este archivo solo
+# cuando cambia (RF-14), sin reiniciar el servicio.
+# Las contraseñas y claves NO van acá: se cargan como variables de entorno desde
+# /etc/monitoreo/secretos.env (ver deploy/secretos.env.ejemplo).
+
+[general]
+bastidor = "Bastidor Aurea Tech"
+intervalo_muestreo_s = 60          # OE3: una lectura por minuto
+base_datos = "/var/lib/monitoreo/monitoreo.db"
+retencion_dias = 365               # RNF-12
+ventana_min = 60                   # ventana deslizante para la tasa de variación (≥ 15)
+# Temperatura contra la que se calcula el margen de condensación.
+# "entrada" = la temperatura medida en la sonda de entrada; o un número en °C.
+temperatura_referencia = "entrada"
+
+[sondas]
+modo = "real"                      # "real" en la Raspberry Pi | "simulado" en el entorno virtual
+escenario = "normal"               # solo en modo simulado (ver: python -m monitoreo escenarios)
+
+# Cada SHT31 va en su propio bus I²C para no compartir cable ni dirección.
+# Bus 1 = GPIO2/GPIO3 (pines 3 y 5). Bus 4 se habilita con dtoverlay=i2c4 (GPIO8/GPIO9,
+# pines 24 y 21). Ver docs/cableado.md.
+[sondas.entrada]
+bus = 1
+direccion = 0x44                   # ADDR a GND = 0x44; ADDR a 3V3 = 0x45
+
+[sondas.salida]
+bus = 4
+direccion = 0x44
+
+[sondas.agua]
+gpio = 17                          # pin físico 11; electrodos entre GPIO17 y GND
+
+# ------------------------------------------------------------------------------------
+# Umbrales (RN-01 a RN-07). Formato: <nivel>_<alto|bajo> = valor.
+#   alto: se dispara por ENCIMA del valor; bajo: por DEBAJO.
+#   histeresis: cuánto debe volver el valor para bajar de nivel (RN-09).
+# Si definís una métrica acá, reemplaza por completo sus valores de fábrica.
+# Los marcados "PROVISIONAL" se calibran con la línea base del bastidor (RN-10).
+# ------------------------------------------------------------------------------------
+[umbrales.temperatura_entrada]     # RN-01, RN-02, RN-03 (°C)
+aviso_alto = 24.0
+advertencia_alto = 27.0
+advertencia_bajo = 18.0
+critico_alto = 32.0
+critico_bajo = 2.0
+histeresis = 1.0
+
+[umbrales.humedad_relativa]        # RN-05 (% HR)
+aviso_alto = 60.0
+advertencia_alto = 80.0
+advertencia_bajo = 8.0
+histeresis = 3.0
+
+[umbrales.punto_rocio]             # RN-04 (°C)
+aviso_alto = 15.0
+advertencia_alto = 17.0
+histeresis = 0.5
+
+[umbrales.margen_condensacion]     # RN-04 (°C) — PROVISIONAL
+aviso_bajo = 5.0
+advertencia_bajo = 3.0
+critico_bajo = 1.0
+histeresis = 0.5
+
+[umbrales.tasa_t_15min]            # RN-06: máx. 5 °C en 15 min — crítico PROVISIONAL
+advertencia_alto = 5.0
+critico_alto = 10.0
+histeresis = 0.5
+
+[umbrales.tasa_t_1h]               # RN-06: máx. 20 °C por hora
+advertencia_alto = 20.0
+histeresis = 1.0
+
+[umbrales.delta_t]                 # RN-07 (°C) — PROVISIONAL hasta tener la línea base
+advertencia_alto = 20.0            # por encima: flujo restringido
+aviso_bajo = 1.0                   # por debajo: derivación de aire frío
+histeresis = 0.5
+
+# ------------------------------------------------------------------------------------
+[notificaciones]
+tiempo_minimo_min = 10             # repetición de avisos si la condición persiste (RF-08)
+reintento_s = 60                   # reintento de envíos fallidos (RF-15)
+descartar_tras_h = 24              # una notificación sin poder enviarse vence a las 24 h
+
+[notificaciones.correo]
+habilitado = false
+servidor = "smtp.gmail.com"
+puerto = 587
+starttls = true
+usuario = "alertas.rack@ejemplo.com"
+contrasena_env = "MONITOREO_SMTP_PASS"   # en Gmail: contraseña de aplicación
+remitente = "alertas.rack@ejemplo.com"
+
+[notificaciones.whatsapp]
+habilitado = false                 # CallMeBot: uso personal (cada destinatario activa su apikey)
+
+[notificaciones.snmp_trap]
+habilitado = false
+destino = "192.168.1.10"           # IP del NMS
+usuario = "monitoreo"
+engine_id = ""                     # ej. "0x80001f8880c71100000000000000" (el NMS lo necesita)
+nivel_seguridad = "authPriv"
+auth_protocolo = "SHA"
+auth_clave_env = "MONITOREO_SNMP_AUTH"
+priv_protocolo = "AES"
+priv_clave_env = "MONITOREO_SNMP_PRIV"
+
+[[destinatarios]]
+nombre = "Técnico de guardia"
+canal = "correo"
+contacto = "tecnico@ejemplo.com"
+
+[[destinatarios]]
+nombre = "Técnico de guardia (WhatsApp)"
+canal = "whatsapp"
+contacto = "+595981000000"
+apikey_env = "MONITOREO_CALLMEBOT_TECNICO"
+
+# ------------------------------------------------------------------------------------
+[panel]
+host = "0.0.0.0"
+puerto = 8443
+usuario = "admin"
+contrasena_hash_env = "MONITOREO_PANEL_HASH"   # generar con: python -m monitoreo hash-contrasena
+certificado = "/etc/monitoreo/tls/panel.crt"   # HTTPS con certificado autofirmado
+clave_privada = "/etc/monitoreo/tls/panel.key"
+
+[snmp]
+# netSnmpPlaypen (.1.3.6.1.4.1.8072.9999.9999) es el subárbol que Net-SNMP reserva para
+# pruebas locales; el MIB del proyecto cuelga de él (deploy/MONITOREO-TERMICO-MIB.txt).
+oid_base = ".1.3.6.1.4.1.8072.9999.9999.1"

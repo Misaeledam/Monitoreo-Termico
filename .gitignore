@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Datos locales y secretos: nunca al repositorio
+*.db
+*.db-shm
+*.db-wal
+datos/
+secretos.env
+*.key
+*.crt
+*.csv

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "monitoreo-termico"
+version = "0.1.0"
+description = "Sistema de monitoreo térmico preventivo para racks de servidores (Raspberry Pi 4 + SHT31)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Misael Amarilla" }]
+dependencies = [
+    "flask>=3.0",
+    "requests>=2.31",
+    "tomli-w>=1.0",
+]
+
+[project.optional-dependencies]
+# Solo en la Raspberry Pi (lectura real de sondas).
+pi = ["smbus2>=0.5", "gpiozero>=2.0"]
+# Servidor web de producción para el panel.
+prod = ["gunicorn>=21"]
+dev = ["pytest>=8", "ruff>=0.5", "smbus2>=0.5"]
+
+[project.scripts]
+monitoreo = "monitoreo.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+monitoreo = ["panel/templates/*.html", "panel/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+ignore = ["N802", "N818"]
