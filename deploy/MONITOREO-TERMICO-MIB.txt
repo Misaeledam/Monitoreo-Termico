@@ -1,0 +1,152 @@
+MONITOREO-TERMICO-MIB DEFINITIONS ::= BEGIN
+
+--
+-- MIB del sistema de monitoreo térmico preventivo para racks.
+-- Cuelga de netSnmpPlaypen (NET-SNMP-MIB, .1.3.6.1.4.1.8072.9999.9999), el
+-- subárbol que Net-SNMP reserva para pruebas locales. Para un despliegue en producción corresponde un número de
+-- empresa propio (Private Enterprise Number de IANA).
+-- Los valores con decimales se publican en centésimas (x100).
+--
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32, Gauge32
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    netSnmpPlaypen
+        FROM NET-SNMP-MIB;
+
+monitoreoTermicoMIB MODULE-IDENTITY
+    LAST-UPDATED "202611250000Z"
+    ORGANIZATION "Proyecto de Grado - Licenciatura en Analisis de Sistemas Informaticos"
+    CONTACT-INFO "Misael Amarilla"
+    DESCRIPTION  "Metricas ambientales de un bastidor de servidores."
+    REVISION     "202611250000Z"
+    DESCRIPTION  "Version inicial."
+    ::= { netSnmpPlaypen 1 }
+
+monitoreoNotificaciones OBJECT IDENTIFIER ::= { monitoreoTermicoMIB 0 }
+
+temperaturaEntrada OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Temperatura del aire de entrada (frente del bastidor) x100."
+    ::= { monitoreoTermicoMIB 1 }
+
+humedadEntrada OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "centesimas de porcentaje"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Humedad relativa en la entrada x100."
+    ::= { monitoreoTermicoMIB 2 }
+
+temperaturaSalida OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Temperatura del aire de salida (fondo del bastidor) x100."
+    ::= { monitoreoTermicoMIB 3 }
+
+humedadSalida OBJECT-TYPE
+    SYNTAX      Integer32 (0..10000)
+    UNITS       "centesimas de porcentaje"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Humedad relativa en la salida x100."
+    ::= { monitoreoTermicoMIB 4 }
+
+diferencialTermico OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Diferencial termico salida - entrada x100 (RF-03)."
+    ::= { monitoreoTermicoMIB 5 }
+
+puntoRocioEntrada OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Punto de rocio en la entrada x100 (RF-04)."
+    ::= { monitoreoTermicoMIB 6 }
+
+puntoRocioSalida OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Punto de rocio en la salida x100 (RF-04)."
+    ::= { monitoreoTermicoMIB 7 }
+
+margenCondensacion OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Temperatura de referencia menos punto de rocio x100."
+    ::= { monitoreoTermicoMIB 8 }
+
+variacionTemp15min OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Variacion maxima de temperatura en los ultimos 15 minutos x100 (RF-05)."
+    ::= { monitoreoTermicoMIB 9 }
+
+variacionTemp1h OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "centesimas de grado Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Variacion maxima de temperatura en la ultima hora x100 (RF-05)."
+    ::= { monitoreoTermicoMIB 10 }
+
+aguaDetectada OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 si la sonda de la base detecta agua (RF-06)."
+    ::= { monitoreoTermicoMIB 11 }
+
+nivelSeveridad OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "0 Normal, 1 Aviso, 2 Advertencia, 3 Critico (RF-07)."
+    ::= { monitoreoTermicoMIB 12 }
+
+nivelSeveridadTexto OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Nivel de severidad en texto o resumen de la notificacion."
+    ::= { monitoreoTermicoMIB 13 }
+
+marcaTemporal OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Marca temporal UTC (ISO 8601) de la ultima lectura."
+    ::= { monitoreoTermicoMIB 14 }
+
+antiguedadLectura OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "segundos"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Segundos desde la ultima lectura (detecta un monitor detenido)."
+    ::= { monitoreoTermicoMIB 15 }
+
+cambioNivel NOTIFICATION-TYPE
+    OBJECTS     { nivelSeveridad, nivelSeveridadTexto }
+    STATUS      current
+    DESCRIPTION "Cambio de nivel de severidad o deteccion de agua (RF-12)."
+    ::= { monitoreoNotificaciones 1 }
+
+END

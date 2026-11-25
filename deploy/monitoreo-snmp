@@ -1,0 +1,3 @@
+#!/bin/sh
+# Envoltura que snmpd ejecuta para la extensión pass_persist.
+exec /opt/monitoreo/venv/bin/python -m monitoreo snmp-agente -c /etc/monitoreo/config.toml
