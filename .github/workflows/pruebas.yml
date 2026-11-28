@@ -17,7 +17,9 @@ jobs:
         with:
           python-version: "3.11"   # la versión de Raspberry Pi OS Bookworm
       - name: Instalar dependencias
-        run: pip install -e ".[dev,prod]" pip-audit
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install -e ".[dev,prod]" pip-audit
       - name: Estilo (Ruff)
         run: ruff check .
       - name: Pruebas (pytest)
