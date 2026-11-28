@@ -93,8 +93,9 @@ usuario = "alertas.rack@ejemplo.com"
 contrasena_env = "MONITOREO_SMTP_PASS"   # en Gmail: contraseña de aplicación
 remitente = "alertas.rack@ejemplo.com"
 
-[notificaciones.whatsapp]
-habilitado = false                 # CallMeBot: uso personal (cada destinatario activa su apikey)
+[notificaciones.telegram]
+habilitado = false                 # Bot API oficial de Telegram (bot creado con @BotFather)
+token_env = "MONITOREO_TELEGRAM_TOKEN"
 
 [notificaciones.snmp_trap]
 habilitado = false
@@ -113,10 +114,9 @@ canal = "correo"
 contacto = "tecnico@ejemplo.com"
 
 [[destinatarios]]
-nombre = "Técnico de guardia (WhatsApp)"
-canal = "whatsapp"
-contacto = "+595981000000"
-apikey_env = "MONITOREO_CALLMEBOT_TECNICO"
+nombre = "Técnico de guardia (Telegram)"
+canal = "telegram"
+contacto = "123456789"            # chat_id del técnico (ver docs/instalacion.md)
 
 # ------------------------------------------------------------------------------------
 [panel]

@@ -46,11 +46,21 @@ El script:
 - Probar los envíos:
   `sudo -u monitoreo bash -c 'set -a; . /etc/monitoreo/secretos.env; /opt/monitoreo/venv/bin/python -m monitoreo probar-notificacion -c /etc/monitoreo/config.toml'`.
 
-### WhatsApp (CallMeBot)
+### Telegram
 
-Cada destinatario agrega el número del bot a sus contactos y le manda por WhatsApp el
-mensaje `I allow callmebot to send me messages`. El bot responde con la apikey, que va en
-`secretos.env`. Según CallMeBot, la API gratuita es solo para uso personal.
+1. En Telegram, escribirle a **@BotFather**, enviar `/newbot` y elegir nombre y usuario del
+   bot. BotFather devuelve el **token**, que va en `MONITOREO_TELEGRAM_TOKEN` dentro de
+   `secretos.env` (nunca en el repositorio).
+2. Cada destinatario busca el bot y le envía `/start`. Un bot de Telegram no puede iniciar
+   la conversación por su cuenta.
+3. Para obtener el `chat_id` de cada destinatario, después del `/start` abrir
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` y copiar el número de `"chat":{"id":...}`.
+   Ese número va como `contacto` del destinatario con `canal = "telegram"`.
+
+Se eligió Telegram en lugar de WhatsApp porque su Bot API es oficial y gratuita. Los
+términos de WhatsApp prohíben la mensajería automática y el uso no personal salvo
+autorización, y la vía autorizada (WhatsApp Business Platform) requiere una cuenta de
+empresa verificada y plantillas aprobadas.
 
 ## 4. SNMP
 

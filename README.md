@@ -11,7 +11,7 @@ mide el ambiente dentro del bastidor y calcula:
 - la tasa de variación de la temperatura.
 
 Con esos datos clasifica el riesgo en cuatro niveles (Normal, Aviso, Advertencia, Crítico),
-con histéresis. Avisa por correo y WhatsApp y publica todo por SNMPv3 para el sistema de
+con histéresis. Avisa por correo y Telegram y publica todo por SNMPv3 para el sistema de
 monitoreo de red. Toda la evaluación ocurre en el propio equipo, así que sigue
 funcionando sin internet.
 

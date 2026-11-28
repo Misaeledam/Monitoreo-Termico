@@ -31,7 +31,8 @@ UNIDADES = {
     "delta_t": "°C",
 }
 
-URL_CALLMEBOT = "https://api.callmebot.com/whatsapp.php"
+URL_TELEGRAM = "https://api.telegram.org/bot{token}/sendMessage"
+MAX_TELEGRAM = 4096  # largo máximo de un mensaje según la Bot API
 
 
 class ErrorEnvio(Exception):
@@ -66,24 +67,35 @@ class CanalCorreo:
             raise ErrorEnvio(f"correo: {exc}") from exc
 
 
-class CanalWhatsApp:
-    """API gratuita de CallMeBot. Según su sitio, el uso gratuito es solo personal: cada
-    destinatario activa su propia clave enviando "I allow callmebot to send me messages"."""
+class CanalTelegram:
+    """Bot API oficial de Telegram (https://core.telegram.org/bots/api), sin costo.
 
-    def __init__(self, sesion: requests.Session | None = None):
+    El bot se crea con @BotFather, que entrega el token. Un bot no puede iniciar una
+    conversación: cada destinatario le escribe primero (/start) y su ``chat_id`` es el
+    contacto que va en la configuración.
+    """
+
+    def __init__(self, cfg: Config, sesion: requests.Session | None = None):
+        self.token_env = cfg.notificaciones.telegram_token_env
         self.sesion = sesion or requests.Session()
 
     def enviar(self, contacto, mensaje, destinatario) -> None:
-        apikey = Config.secreto(destinatario.apikey_env) if destinatario else ""
-        if not contacto or not apikey:
-            raise ErrorEnvio("WhatsApp: falta el número o la apikey de CallMeBot")
+        token = Config.secreto(self.token_env)
+        if not contacto or not token:
+            raise ErrorEnvio("Telegram: falta el chat_id o el token del bot")
         try:
-            r = self.sesion.get(URL_CALLMEBOT, params={"phone": contacto, "text": mensaje,
-                                                        "apikey": apikey}, timeout=30)
+            r = self.sesion.post(URL_TELEGRAM.format(token=token),
+                                 json={"chat_id": contacto, "text": mensaje[:MAX_TELEGRAM]},
+                                 timeout=30)
         except requests.RequestException as exc:
-            raise ErrorEnvio(f"WhatsApp: {exc}") from exc
-        if r.status_code != 200:
-            raise ErrorEnvio(f"WhatsApp: HTTP {r.status_code}")
+            # El mensaje de error no incluye la URL para no dejar el token en los registros.
+            raise ErrorEnvio(f"Telegram: {type(exc).__name__}") from None
+        try:
+            ok = r.json().get("ok", False)
+        except ValueError:
+            ok = False
+        if r.status_code != 200 or not ok:
+            raise ErrorEnvio(f"Telegram: HTTP {r.status_code}")
 
 
 class CanalSnmpTrap:
@@ -165,8 +177,8 @@ class Notificador:
         canales: dict[str, Canal] = {}
         if cfg.notificaciones.correo.habilitado:
             canales["correo"] = CanalCorreo(cfg)
-        if cfg.notificaciones.whatsapp_habilitado:
-            canales["whatsapp"] = CanalWhatsApp()
+        if cfg.notificaciones.telegram_habilitado:
+            canales["telegram"] = CanalTelegram(cfg)
         if cfg.notificaciones.snmp_trap.habilitado:
             canales["snmp"] = CanalSnmpTrap(cfg)
         return canales
@@ -219,5 +231,5 @@ class Notificador:
         return enviadas, fallidas
 
 
-__all__ = ["Notificador", "CanalCorreo", "CanalWhatsApp", "CanalSnmpTrap", "ErrorEnvio",
+__all__ = ["Notificador", "CanalCorreo", "CanalTelegram", "CanalSnmpTrap", "ErrorEnvio",
            "redactar", "Nivel"]

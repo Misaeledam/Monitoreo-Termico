@@ -130,9 +130,8 @@ class CanalSnmpTrap:
 @dataclass(slots=True)
 class Destinatario:
     nombre: str
-    canal: str  # "correo" | "whatsapp"
+    canal: str  # "correo" | "telegram"
     contacto: str
-    apikey_env: str = ""
     activo: bool = True
 
 
@@ -141,7 +140,8 @@ class ConfigNotificaciones:
     tiempo_minimo_min: float = 10.0
     reintento_s: int = 60
     descartar_tras_h: float = 24.0
-    whatsapp_habilitado: bool = False
+    telegram_habilitado: bool = False
+    telegram_token_env: str = "MONITOREO_TELEGRAM_TOKEN"
     correo: CanalCorreo = field(default_factory=CanalCorreo)
     snmp_trap: CanalSnmpTrap = field(default_factory=CanalSnmpTrap)
     destinatarios: list[Destinatario] = field(default_factory=list)
@@ -220,13 +220,14 @@ def desde_dict(datos: dict[str, Any], origen: Path | None = None) -> Config:
         tiempo_minimo_min=float(n.get("tiempo_minimo_min", 10.0)),
         reintento_s=int(n.get("reintento_s", 60)),
         descartar_tras_h=float(n.get("descartar_tras_h", 24.0)),
-        whatsapp_habilitado=bool(n.get("whatsapp", {}).get("habilitado", False)),
+        telegram_habilitado=bool(n.get("telegram", {}).get("habilitado", False)),
+        telegram_token_env=n.get("telegram", {}).get("token_env", "MONITOREO_TELEGRAM_TOKEN"),
         correo=CanalCorreo(**n.get("correo", {})),
         snmp_trap=CanalSnmpTrap(**n.get("snmp_trap", {})),
         destinatarios=[Destinatario(**d) for d in datos.get("destinatarios", [])],
     )
     for d in notif.destinatarios:
-        if d.canal not in ("correo", "whatsapp"):
+        if d.canal not in ("correo", "telegram"):
             raise ValueError(f"Canal inválido para '{d.nombre}': {d.canal}")
 
     t_ref = gen.get("temperatura_referencia")

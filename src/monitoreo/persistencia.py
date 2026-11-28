@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS destinatario (
     id_destinatario INTEGER PRIMARY KEY,
     nombre_rol TEXT NOT NULL,
     contacto TEXT NOT NULL,
-    canal TEXT NOT NULL CHECK (canal IN ('correo', 'whatsapp')),
+    canal TEXT NOT NULL CHECK (canal IN ('correo', 'telegram')),
     activo INTEGER NOT NULL,
     UNIQUE (canal, contacto)
 );
