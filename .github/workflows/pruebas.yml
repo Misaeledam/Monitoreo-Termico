@@ -1,0 +1,26 @@
+# Check automático: en cada push y pull request corre el análisis de estilo (Ruff),
+# las pruebas (pytest) y la revisión de vulnerabilidades de dependencias (pip-audit).
+name: Pruebas
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "hotfix/**"]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"   # la versión de Raspberry Pi OS Bookworm
+      - name: Instalar dependencias
+        run: pip install -e ".[dev,prod]" pip-audit
+      - name: Estilo (Ruff)
+        run: ruff check .
+      - name: Pruebas (pytest)
+        run: pytest -v
+      - name: Vulnerabilidades en dependencias (pip-audit)
+        run: pip-audit
