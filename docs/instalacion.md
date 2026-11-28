@@ -52,7 +52,18 @@ Cada destinatario agrega el número del bot a sus contactos y le manda por Whats
 mensaje `I allow callmebot to send me messages`. El bot responde con la apikey, que va en
 `secretos.env`. Según CallMeBot, la API gratuita es solo para uso personal.
 
-## 4. SNMP
+## 4. Firewall
+
+Desde una PC de la subred de gestión (si la subred es otra, se corta el SSH):
+
+```bash
+sudo ./deploy/firewall.sh 192.168.10.0/24     # reemplazar por la subred real
+```
+
+Abre solo SSH (22/TCP), panel (8443/TCP) y SNMP (161/UDP) desde esa subred. Detalle en
+`docs/seguridad.md`.
+
+## 5. SNMP
 
 ```bash
 sudo systemctl stop snmpd
@@ -72,7 +83,7 @@ Este procedimiento se verificó con Net-SNMP 5.9 (snmpd con `pass_persist` y snm
 SNMPv3 authPriv); también se verificó la recepción de la notificación `cambioNivel` en
 snmptrapd.
 
-## 5. Operación
+## 6. Operación
 
 ```bash
 systemctl status monitoreo-monitor monitoreo-panel

@@ -5,6 +5,8 @@
 #    Eso agrega la línea "rouser monitoreo" a /usr/share/snmp/snmpd.conf.
 # 2) Agregar lo siguiente a /etc/snmp/snmpd.conf y reiniciar snmpd.
 
+# Solo SNMPv3: comentar o borrar cualquier línea rocommunity/rwcommunity del archivo.
+
 # Escuchar en todas las interfaces (Debian escucha solo en 127.0.0.1 por defecto).
 agentaddress udp:161
 

@@ -2,11 +2,19 @@
 
 Pensado para la red de gestión: no carga nada de internet (gráficos dibujados con canvas).
 Si se define la variable de entorno con el hash de la contraseña, pide usuario y clave.
+
+Controles de seguridad (ver docs/seguridad.md):
+- bloqueo temporal de la IP tras varios intentos de acceso fallidos (OWASP A07:2025);
+- registro de los intentos fallidos y de los bloqueos (A09:2025);
+- cabeceras de seguridad en todas las respuestas (A02:2025).
 """
 
 from __future__ import annotations
 
 import io
+import logging
+import threading
+import time
 from datetime import UTC, datetime, timedelta
 from functools import wraps
 from pathlib import Path
@@ -19,10 +27,63 @@ from ..modelos import Nivel
 from ..persistencia import BaseDatos, desde_iso
 
 MAX_PUNTOS = 1500
+log = logging.getLogger("monitoreo.panel")
+
+CABECERAS_SEGURIDAD = {
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; "
+                               "base-uri 'none'; form-action 'self'",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Cache-Control": "no-store",
+}
 
 
-def crear_app(cfg: Config, ruta_config: str | Path | None = None) -> Flask:
+class ControlIntentos:
+    """Bloquea una IP durante ``bloqueo_s`` segundos después de ``max_fallos`` intentos
+    fallidos dentro de ``ventana_s`` segundos. El estado vive en memoria del proceso: por
+    eso el panel se sirve con un solo proceso de gunicorn (con varios hilos)."""
+
+    def __init__(self, max_fallos: int = 5, ventana_s: float = 900, bloqueo_s: float = 900,
+                 reloj=time.monotonic):
+        self.max_fallos, self.ventana_s, self.bloqueo_s = max_fallos, ventana_s, bloqueo_s
+        self.reloj = reloj
+        self._fallos: dict[str, list[float]] = {}
+        self._bloqueadas: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def bloqueada(self, ip: str) -> bool:
+        with self._lock:
+            hasta = self._bloqueadas.get(ip)
+            if hasta is None:
+                return False
+            if self.reloj() >= hasta:
+                del self._bloqueadas[ip]
+                return False
+            return True
+
+    def registrar_fallo(self, ip: str) -> bool:
+        """Devuelve True si este fallo provoca el bloqueo."""
+        with self._lock:
+            ahora = self.reloj()
+            recientes = [t for t in self._fallos.get(ip, []) if ahora - t < self.ventana_s]
+            recientes.append(ahora)
+            if len(recientes) >= self.max_fallos:
+                self._fallos.pop(ip, None)
+                self._bloqueadas[ip] = ahora + self.bloqueo_s
+                return True
+            self._fallos[ip] = recientes
+            return False
+
+    def registrar_exito(self, ip: str) -> None:
+        with self._lock:
+            self._fallos.pop(ip, None)
+
+
+def crear_app(cfg: Config, ruta_config: str | Path | None = None,
+              intentos: ControlIntentos | None = None) -> Flask:
     app = Flask(__name__)
+    control = intentos or ControlIntentos()
     recargable = ConfigRecargable(ruta_config) if ruta_config else None
 
     def config_actual() -> Config:
@@ -40,14 +101,32 @@ def crear_app(cfg: Config, ruta_config: str | Path | None = None) -> Flask:
             c = config_actual()
             hash_clave = Config.secreto(c.panel.contrasena_hash_env)
             if hash_clave:
+                ip = request.remote_addr or "desconocida"
+                if control.bloqueada(ip):
+                    return Response("Demasiados intentos fallidos. Probá más tarde.", 429)
                 auth = request.authorization
                 if not (auth and auth.username == c.panel.usuario
                         and check_password_hash(hash_clave, auth.password or "")):
+                    if auth is not None:  # el primer pedido del navegador llega sin credenciales
+                        log.warning("Acceso fallido al panel desde %s (usuario %r)", ip,
+                                    auth.username)
+                        if control.registrar_fallo(ip):
+                            log.warning("IP %s bloqueada por intentos fallidos", ip)
+                            return Response("Demasiados intentos fallidos. Probá más tarde.", 429)
                     return Response("Acceso restringido", 401,
                                     {"WWW-Authenticate": 'Basic realm="Monitoreo termico"'})
+                control.registrar_exito(ip)
             return vista(*args, **kwargs)
 
         return envoltura
+
+    @app.after_request
+    def cabeceras(respuesta):
+        for nombre, valor in CABECERAS_SEGURIDAD.items():
+            respuesta.headers.setdefault(nombre, valor)
+        if request.is_secure:
+            respuesta.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+        return respuesta
 
     @app.get("/")
     @requiere_login

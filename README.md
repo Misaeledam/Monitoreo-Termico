@@ -45,6 +45,7 @@ python -m monitoreo panel -c config/config.simulado.toml   # http://127.0.0.1:80
 - [Cableado](docs/cableado.md)
 - [Instalación en la Raspberry Pi](docs/instalacion.md)
 - [Entorno virtual simulado](docs/entorno-simulado.md)
+- [Seguridad (OWASP Top 10:2025)](docs/seguridad.md)
 
 ## Estado
 
